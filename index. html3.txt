@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Доска объявлений — Продай и купи</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { background: #f5f6f8; color: #222; }
+
+  header {
+    background: #fff; border-bottom: 1px solid #e5e5e5; padding: 12px 20px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-inner {
+    max-width: 1100px; margin: 0 auto; display: flex; align-items: center;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .logo { font-size: 22px; font-weight: 700; color: #0a7cff; white-space: nowrap; }
+  .search-box { flex: 1; min-width: 200px; display: flex; }
+  .search-box input {
+    flex: 1; padding: 10px 14px; border: 1px solid #ccc; border-right: none;
+    border-radius: 8px 0 0 8px; font-size: 15px; outline: none;
+  }
+  .search-box input:focus { border-color: #0a7cff; }
+  .search-box button {
+    padding: 10px 20px; background: #0a7cff; color: #fff; border: none;
+    border-radius: 0 8px 8px 0; cursor: pointer; font-size: 15px;
+  }
+  .search-box button:hover { background: #005fcc; }
+  .btn-post {
+    padding: 10px 20px; background: #00b341; color: #fff; border: none;
+    border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 15px; white-space: nowrap;
+  }
+  .btn-post:hover { background: #009036; }
+
+  /* Пользователь в шапке */
+  .user-area { display: flex; align-items: center; gap: 10px; }
+  .user-name { font-size: 14px; color: #333; font-weight: 600; }
+  .btn-auth {
+    padding: 9px 16px; background: #0a7cff; color: #fff; border: none;
+    border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;
+  }
+  .btn-auth:hover { background: #005fcc; }
+  .btn-logout {
+    padding: 9px 16px; background: #eee; color: #333; border: none;
+    border-radius: 8px; cursor: pointer; font-size: 14px;
+  }
+  .btn-logout:hover { background: #ddd; }
+
+  .categories {
+    max-width: 1100px; margin: 20px auto; padding: 0 20px;
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .cat-btn {
+    padding: 8px 16px; background: #fff; border: 1px solid #ddd;
+    border-radius: 20px; cursor: pointer; font-size: 14px; transition: 0.2s;
+  }
+  .cat-btn:hover { border-color: #0a7cff; color: #0a7cff; }
+  .cat-btn.active { background: #0a7cff; color: #fff; border-color: #0a7cff; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 20px 40px; }
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .results-info { color: #777; font-size: 14px; }
+  .sort-select {
+    padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px;
+    background: #fff; font-size: 14px; color: #333; cursor: pointer;
+    outline: none; font-family: inherit;
+  }
+  .sort-select:focus, .sort-select:hover { border-color: #0a7cff; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+
+  .card {
+    background: #fff; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07); transition: 0.2s; cursor: pointer;
+    display: flex; flex-direction: column; position: relative;
+  }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateY(-2px); }
+  .card-img {
+    height: 160px; background: #e9edf2; display: flex; align-items: center;
+    justify-content: center; font-size: 48px; color: #b9c2cc; overflow: hidden;
+  }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-body { padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .card-price { font-size: 18px; font-weight: 700; color: #111; }
+  .card-title { font-size: 14px; color: #333; line-height: 1.35; flex: 1; }
+  .card-location { font-size: 12px; color: #999; }
+
+  .card-delete, .card-edit {
+    position: absolute; top: 8px; width: 30px; height: 30px; border: none;
+    border-radius: 50%; background: rgba(255,255,255,0.92); font-size: 16px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.15); z-index: 2;
+  }
+  .card-edit { right: 44px; color: #0a7cff; }
+  .card-delete { right: 8px; color: #d33; }
+  .card:hover .card-delete, .card:hover .card-edit { opacity: 1; }
+  .card-edit:hover { background: #0a7cff; color: #fff; }
+  .card-delete:hover { background: #d33; color: #fff; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 200; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 14px; padding: 24px; width: 100%;
+    max-width: 440px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal h2 { margin-bottom: 16px; font-size: 20px; }
+  .modal label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; margin-top: 12px; }
+  .modal input[type="text"], .modal input[type="number"], .modal input[type="email"],
+  .modal input[type="password"], .modal select, .modal textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px;
+    font-size: 14px; outline: none; font-family: inherit;
+  }
+  .modal input:focus, .modal select:focus, .modal textarea:focus { border-color: #0a7cff; }
+  .modal textarea { resize: vertical; min-height: 60px; }
+
+  .photo-upload { margin-top: 6px; }
+  .photo-drop {
+    border: 2px dashed #ccc; border-radius: 10px; padding: 18px; text-align: center;
+    cursor: pointer; transition: 0.2s; color: #888; font-size: 14px; background: #fafbfc;
+  }
+  .photo-drop:hover, .photo-drop.dragover { border-color: #0a7cff; background: #f0f7ff; color: #0a7cff; }
+  .photo-drop input[type="file"] { display: none; }
+  .photo-preview {
+    display: none; margin-top: 10px; position: relative; border-radius: 10px;
+    overflow: hidden; background: #eee;
+  }
+  .photo-preview.visible { display: block; }
+  .photo-preview img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
+  .photo-remove {
+    position: absolute; top: 6px; right: 6px; width: 30px; height: 30px;
+    border: none; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff;
+    font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .photo-remove:hover { background: #d33; }
+  .photo-hint { font-size: 12px; color: #999; margin-top: 6px; }
+
+  .modal-actions { margin-top: 20px; display: flex; gap: 10px; }
+  .modal-actions button {
+    flex: 1; padding: 11px; border: none; border-radius: 8px;
+    font-size: 15px; cursor: pointer; font-weight: 600;
+  }
+  .btn-save { background: #0a7cff; color: #fff; }
+  .btn-save:hover { background: #005fcc; }
+  .btn-cancel { background: #eee; color: #333; }
+  .btn-cancel:hover { background: #ddd; }
+  .btn-edit { background: #0a7cff; color: #fff; }
+  .btn-edit:hover { background: #005fcc; }
+
+  .empty { text-align: center; padding: 60px 20px; color: #999; font-size: 16px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #222; color: #fff; padding: 12px 24px; border-radius: 10px;
+    font-size: 14px; opacity: 0; transition: 0.3s; z-index: 300;
+    pointer-events: none; max-width: 90vw; text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* ---- Auth ---- */
+  .auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .auth-tab {
+    flex: 1; padding: 10px; border: 1px solid #ddd; background: #f7f8fa;
+    border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; color: #555;
+  }
+  .auth-tab.active { background: #0a7cff; color: #fff; border-color: #0a7cff; }
+
+  .auth-error {
+    color: #d33; font-size: 13px; margin-top: 10px; min-height: 18px;
+  }
+  .auth-hint { font-size: 12px; color: #999; margin-top: 8px; }
+
+  .code-inputs { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
+  .code-inputs input {
+    width: 48px; height: 56px; text-align: center; font-size: 24px; font-weight: 700;
+    border: 1px solid #ccc; border-radius: 10px; outline: none;
+  }
+  .code-inputs input:focus { border-color: #0a7cff; box-shadow: 0 0 0 3px rgba(10,124,255,0.15); }
+
+  .qr-box {
+    display: flex; justify-content: center; margin: 16px 0;
+    padding: 16px; background: #fff; border: 1px solid #eee; border-radius: 12px;
+  }
+
+  .secret-box {
+    background: #f7f8fa; padding: 10px 12px; border-radius: 8px;
+    font-family: monospace; font-size: 14px; letter-spacing: 1px;
+    word-break: break-all; text-align: center; margin: 10px 0;
+    border: 1px dashed #ccc;
+  }
+
+  .badge-2fa {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    background: #e6f4ea; color: #00a341; border-radius: 10px; margin-left: 6px;
+    font-weight: 600; vertical-align: middle;
+  }
+
+  @media (max-width: 600px) {
+    .header-inner { gap: 10px; }
+    .btn-post { width: 100%; }
+    .search-box { order: 3; flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">📦 Барахло</div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Что ищете? Например, iPhone или диван">
+      <button onclick="applySearch()">Найти</button>
+    </div>
+    <button class="btn-post" onclick="requireAuth(openModal)">+ Разместить</button>
+    <div class="user-area" id="userArea"></div>
+  </div>
+</header>
+
+<div class="categories" id="categories"></div>
+
+<div class="container">
+  <div class="toolbar">
+    <div class="results-info" id="resultsInfo"></div>
+    <select class="sort-select" id="sortSelect" onchange="setSort(this.value)">
+      <option value="new">Сначала новые</option>
+      <option value="old">Сначала старые</option>
+      <option value="priceAsc">Цена: по возрастанию</option>
+      <option value="priceDesc">Цена: по убыванию</option>
+    </select>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- ============ МОДАЛЬНОЕ ОКНО: РЕГИСТРАЦИЯ / ВХОД ============ -->
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal" id="authModal"></div>
+</div>
+
+<!-- Модальное окно объявления -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Новое объявление</h2>
+
+    <label>Фото</label>
+    <div class="photo-upload">
+      <div class="photo-drop" id="photoDrop">
+        📷 Нажмите или перетащите фото сюда
+        <input type="file" id="inPhoto" accept="image/*">
+      </div>
+      <div class="photo-preview" id="photoPreview">
+        <img id="previewImg" alt="Превью">
+        <button class="photo-remove" type="button" onclick="clearPhoto()" title="Удалить фото">✕</button>
+      </div>
+      <div class="photo-hint">JPG, PNG, WebP. Сжимается автоматически до ~800px.</div>
+    </div>
+
+    <label>Название</label>
+    <input type="text" id="inTitle" placeholder="Например, iPhone 13 128GB">
+    <label>Цена, ₽</label>
+    <input type="number" id="inPrice" placeholder="45000" min="0">
+    <label>Категория</label>
+    <select id="inCat"></select>
+    <label>Город</label>
+    <input type="text" id="inCity" placeholder="Москва">
+    <label>Описание</label>
+    <textarea id="inDesc" placeholder="Состояние, детали, причина продажи..."></textarea>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+      <button class="btn-save" id="btnSave" onclick="submitAd()">Опубликовать</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ================================================================
+  //  КОНСТАНТЫ И КЛЮЧИ
+  // ================================================================
+  const STORAGE_KEY = 'barahlo_ads_v2';
+  const SEED_KEY = 'barahlo_seeded_v2';
+  const SORT_KEY = 'barahlo_sort_v1';
+  const USERS_KEY = 'barahlo_users_v1';       // "база" пользователей
+  const SESSION_KEY = 'barahlo_session_v1';   // текущая сессия
+
+  const MAX_IMG_SIZE = 800;
+  const JPEG_QUALITY = 0.75;
+  const MAX_FILE_MB = 10;
+  const CODE_LENGTH = 6;
+
+  const categories = ['Все', 'Электроника', 'Транспорт', 'Недвижимость', 'Дом и сад', 'Одежда', 'Хобби'];
+  const emojiByCat = {
+    'Электроника': '📱', 'Транспорт': '🚗', 'Недвижимость': '🏠',
+    'Дом и сад': '🪴', 'Одежда': '👕', 'Хобби': '🎸'
+  };
+
+  const seedAds = [
+    { id: 1, title: 'iPhone 13 128GB, идеальное состояние', price: 45000, cat: 'Электроника', city: 'Москва', desc: 'Куплен год назад, без сколов, батарея 92%.', photo: null, ownerId: null },
+    { id: 2, title: 'Диван-кровать угловой, серый', price: 18000, cat: 'Дом и сад', city: 'Санкт-Петербург', desc: 'Раскладывается, есть ящик для белья.', photo: null, ownerId: null },
+    { id: 3, title: 'Велосипед горный Trek Marlin 5', price: 32000, cat: 'Транспорт', city: 'Казань', desc: 'Размер M, пробег небольшой, ТО пройдено.', photo: null, ownerId: null },
+    { id: 4, title: 'Ноутбук ASUS VivoBook 15', price: 38000, cat: 'Электроника', city: 'Новосибирск', desc: 'Ryzen 5, 16GB RAM, 512GB SSD.', photo: null, ownerId: null },
+    { id: 5, title: 'Куртка зимняя мужская, р. L', price: 4500, cat: 'Одежда', city: 'Екатеринбург', desc: 'Тёплая, носилась один сезон.', photo: null, ownerId: null },
+    { id: 6, title: 'Синтезатор Yamaha PSR-E373', price: 21000, cat: 'Хобби', city: 'Москва', desc: '61 клавиша, в комплекте стойка и педаль.', photo: null, ownerId: null },
+    { id: 7, title: '1-комнатная квартира, 38 м²', price: 6500000, cat: 'Недвижимость', city: 'Москва', desc: '5 минут до метро, свежий ремонт.', photo: null, ownerId: null },
+    { id: 8, title: 'PlayStation 5 + 2 геймпада', price: 52000, cat: 'Электроника', city: 'Санкт-Петербург', desc: 'Дисковая версия, 3 игры в подарок.', photo: null, ownerId: null }
+  ];
+
+  // ================================================================
+  //  УТИЛИТЫ: безопасное чтение/запись localStorage
+  // ================================================================
+  function lsGet(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch { return fallback; }
+  }
+  function lsSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+    catch (e) { console.warn('lsSet:', e); return false; }
+  }
+
+  // ================================================================
+  //  «ХЕШИРОВАНИЕ» ПАРОЛЯ (ДЕМО!)
+  //  В реальном проекте — bcrypt/argon2 НА СЕРВЕРЕ.
+  //  Здесь — Web Crypto SHA-256 + соль, только для демонстрации.
+  // ================================================================
+  async function hashPassword(password, salt) {
+    const data = new TextEncoder().encode(salt + '::' + password);
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function genSalt() {
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // ================================================================
+  //  ГЕНЕРАЦИЯ 2FA: TOTP-подобный код
+  //  В реальном проекте — RFC 6238 (HMAC-SHA1, 30 сек).
+  //  Здесь — простой SHA-256(secret + окно_времени) для демонстрации.
+  // ================================================================
+  const TOTP_PERIOD = 30; // секунд
+  const TOTP_WINDOW = 1;  // разрешаем ±1 окно (для неточных часов)
+
+  function generateSecret() {
+    // Base32-подобная строка из 32 символов (удобно вводить вручную)
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    const arr = new Uint8Array(32);
+    crypto.getRandomValues(arr);
+    return Array.from(arr).map(b => alphabet[b % 32]).join('');
+  }
+
+  async function totpCode(secret, counter) {
+    // Эмуляция TOTP: SHA-256(secret + counter) → 6 цифр
+    const data = new TextEncoder().encode(secret + ':' + counter);
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    const bytes = new Uint8Array(buf);
+    // Берём 4 байта и превращаем в число
+    const num = ((bytes[0] & 0x7f) << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+    return String(num % 1000000).padStart(6, '0');
+  }
+
+  function currentCounter() {
+    return Math.floor(Date.now() / 1000 / TOTP_PERIOD);
+  }
+
+  async function expectedTotp(secret) {
+    return totpCode(secret, currentCounter());
+  }
+
+  async function verifyTotp(secret, input) {
+    const clean = String(input).replace(/\D/g, '');
+    if (clean.length !== CODE_LENGTH) return false;
+    const now = currentCounter();
+    for (let d = -TOTP_WINDOW; d <= TOTP_WINDOW; d++) {
+      const code = await totpCode(secret, now + d);
+      if (code === clean) return true;
+    }
+    return false;
+  }
+
+  // ================================================================
+  //  «БАЗА» ПОЛЬЗОВАТЕЛЕЙ
+  // ================================================================
+  function loadUsers() { return lsGet(USERS_KEY, []); }
+  function saveUsers(list) { return lsSet(USERS_KEY, list); }
+
+  function findUser(login) {
+    const users = loadUsers();
+    const l = login.trim().toLowerCase();
+    return users.find(u => u.login === l);
+  }
+
+  // ================================================================
+  //  СЕССИЯ
+  // ================================================================
+  function getSession() { return lsGet(SESSION_KEY, null); }
+  function setSession(s) { lsSet(SESSION_KEY, s); }
+  function clearSession() { localStorage.removeItem(SESSION_KEY); }
+
+  function currentUser() {
+    const s = getSession();
+    if (!s) return null;
+    const u = loadUsers().find(x => x.id === s.userId);
+    return u || null;
+  }
+
+  // ================================================================
+  //  ОБЪЯВЛЕНИЯ
+  // ================================================================
+  function loadAds() {
+    let list = lsGet(STORAGE_KEY, null);
+    if (!Array.isArray(list)) {
+      if (!localStorage.getItem(SEED_KEY)) {
+        localStorage.setItem(SEED_KEY, '1');
+        lsSet(STORAGE_KEY, seedAds);
+        return [...seedAds];
+      }
+      return [];
+    }
+    return list;
+  }
+  function saveAds(list) {
+    if (!lsSet(STORAGE_KEY, list)) {
+      showToast('⚠️ Не хватает места в хранилище. Удалите старые фото.');
+      return false;
+    }
+    return true;
+  }
+
+  function loadSort() {
+    const s = localStorage.getItem(SORT_KEY);
+    return ['new','old','priceAsc','priceDesc'].includes(s) ? s : 'new';
+  }
+  function saveSort(v) { try { localStorage.setItem(SORT_KEY, v); } catch {} }
+
+  // ================================================================
+  //  СОСТОЯНИЕ
+  // ================================================================
+  let ads = loadAds();
+  let activeCat = 'Все';
+  let searchQuery = '';
+  let currentSort = loadSort();
+  let nextId = ads.reduce((m, a) => Math.max(m, a.id), 0) + 1;
+  let currentPhotoData = null;
+  let editingId = null;
+
+  // ================================================================
+  //  UI: шапка / пользователь
+  // ================================================================
+  function renderUserArea() {
+    const box = document.getElementById('userArea');
+    const u = currentUser();
+    if (u) {
+      const badge = u.twoFA ? '<span class="badge-2fa">2FA</span>' : '';
+      box.innerHTML = `
+        <span class="user-name">👤 ${escapeHtml(u.name)}${badge}</span>
+        <button class="btn-logout" onclick="logout()">Выйти</button>
+      `;
+    } else {
+      box.innerHTML = `<button class="btn-auth" onclick="openAuth('login')">Войти</button>`;
+    }
+  }
+
+  function requireAuth(callback) {
+    if (currentUser()) callback();
+    else { openAuth('login'); showToast('Сначала войдите или зарегистрируйтесь'); }
+  }
+
+  function logout() {
+    clearSession();
+    renderUserArea();
+    render();
+    showToast('Вы вышли из аккаунта');
+  }
+
+  // ================================================================
+  //  МОДАЛЬНОЕ ОКНО АУТЕНТИФИКАЦИИ
+  // ================================================================
+  let authState = { mode: 'login' };
+
+  function openAuth(mode = 'login') {
+    authState = { mode };
+    document.getElementById('authOverlay').classList.add('open');
+    renderAuthModal();
+  }
+
+  function closeAuth() {
+    document.getElementById('authOverlay').classList.remove('open');
+    authState = { mode: 'login' };
+  }
+
+  function renderAuthModal() {
+    const box = document.getElementById('authModal');
+    if (authState.mode === 'login') box.innerHTML = authLoginHTML();
+    else if (authState.mode === 'register') box.innerHTML = authRegisterHTML();
+    else if (authState.mode === '2fa') box.innerHTML = auth2FAHTML();
+    else if (authState.mode === 'setup2fa') box.innerHTML = authSetup2FAHTML();
+    else if (authState.mode === 'totp') box.innerHTML = authTOTPHTML();
+
+    // Автофокус на первое поле
+    setTimeout(() => {
+      const first = box.querySelector('input');
+      if (first) first.focus();
+    }, 50);
+  }
+
+  function switchAuthMode(mode) {
+    authState.mode = mode;
+    renderAuthModal();
+  }
+
+  // ----- ВХОД -----
+  function authLoginHTML() {
+    return `
+      <h2>Вход в аккаунт</h2>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthMode('login')">Вход</button>
+        <button class="auth-tab" onclick="switchAuthMode('register')">Регистрация</button>
+      </div>
+      <label>Логин или email</label>
+      <input type="text" id="loginIdent" placeholder="login или email" autocomplete="username">
+      <label>Пароль</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="auth-error" id="authError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeAuth()">Отмена</button>
+        <button class="btn-save" onclick="doLogin()">Войти</button>
+      </div>
+    `;
+  }
+
+  async function doLogin() {
+    const ident = document.getElementById('loginIdent').value.trim().toLowerCase();
+    const pass = document.getElementById('loginPassword').value;
+    const err = document.getElementById('authError');
+    err.textContent = '';
+
+    if (!ident || !pass) { err.textContent = 'Заполните оба поля'; return; }
+
+    const user = findUser(ident);
+    if (!user) { err.textContent = 'Пользователь не найден'; return; }
+
+    const hash = await hashPassword(pass, user.salt);
+    if (hash !== user.passwordHash) { err.textContent = 'Неверный пароль'; return; }
+
+    // Если у пользователя включена 2FA — запрашиваем код
+    if (user.twoFA && user.totpSecret) {
+      authState.pendingUserId = user.id;
+      authState.mode = 'totp';
+      renderAuthModal();
+      return;
+    }
+
+    finishLogin(user);
+  }
+
+  function finishLogin(user) {
+    setSession({ userId: user.id, loginAt: Date.now() });
+    closeAuth();
+    renderUserArea();
+    render();
+    showToast(`Добро пожаловать, ${user.name}!`);
+  }
+
+  // ----- РЕГИСТРАЦИЯ -----
+  function authRegisterHTML() {
+    return `
+      <h2>Регистрация</h2>
+      <div class="auth-tabs">
+        <button class="auth-tab" onclick="switchAuthMode('login')">Вход</button>
+        <button class="auth-tab active" onclick="switchAuthMode('register')">Регистрация</button>
+      </div>
+      <label>Имя</label>
+      <input type="text" id="regName" placeholder="Как вас зовут">
+      <label>Логин</label>
+      <input type="text" id="regLogin" placeholder="латиница, без пробелов" autocomplete="username">
+      <label>Email (необязательно)</label>
+      <input type="email" id="regEmail" placeholder="you@example.com">
+      <label>Пароль</label>
+      <input type="password" id="regPassword" placeholder="минимум 6 символов" autocomplete="new-password">
+      <label>Повторите пароль</label>
+      <input type="password" id="regPassword2" placeholder="••••••••" autocomplete="new-password"
+             onkeydown="if(event.key==='Enter')doRegister()">
+      <div class="auth-error" id="authError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="switchAuthMode('login')">Назад</button>
+        <button class="btn-save" onclick="doRegister()">Создать аккаунт</button>
+      </div>
+      <div class="auth-hint">2FA можно будет включить в следующем шаге</div>
+    `;
+  }
+
+  async function doRegister() {
+    const name = document.getElementById('regName').value.trim();
+    const login = document.getElementById('regLogin').value.trim().toLowerCase();
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
+    const pass = document.getElementById('regPassword').value;
+    const pass2 = document.getElementById('regPassword2').value;
+    const err = document.getElementById('authError');
+    err.textContent = '';
+
+    if (!name) { err.textContent = 'Введите имя'; return; }
+    if (!/^[a-z0-9_]{3,20}$/.test(login)) {
+      err.textContent = 'Логин: 3–20 символов, латиница/цифры/_'; return;
+    }
+    if (findUser(login)) { err.textContent = 'Такой логин уже занят'; return; }
+    if (email && findUser(email)) { err.textContent = 'Этот email уже используется'; return; }
+    if (pass.length < 6) { err.textContent = 'Пароль минимум 6 символов'; return; }
+    if (pass !== pass2) { err.textContent = 'Пароли не совпадают'; return; }
+
+    const salt = genSalt();
+    const passwordHash = await hashPassword(pass, salt);
+
+    const users = loadUsers();
+    const id = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const newUser = {
+      id, name, login, email: email || null,
+      salt, passwordHash,
+      twoFA: false, totpSecret: null,
+      createdAt: Date.now()
+    };
+    users.push(newUser);
+    if (!saveUsers(users)) { err.textContent = 'Не удалось сохранить (хранилище переполнено)'; return; }
+
+    // Сразу предлагаем настроить 2FA
+    authState.pendingUserId = id;
+    authState.mode = 'setup2fa';
+    authState.setupSecret = generateSecret();
+    renderAuthModal();
+  }
+
+  // ----- НАСТРОЙКА 2FA (после регистрации) -----
+  function authSetup2FAHTML() {
+    const secret = authState.setupSecret || generateSecret();
+    authState.setupSecret = secret;
+    // «QR-код» — просто текст, чтобы не тянуть библиотеку
+    return `
+      <h2>Настройка двухфакторной защиты</h2>
+      <p style="font-size:14px;color:#555;margin-bottom:8px">
+        Отсканируйте QR-код в приложении-аутентификаторе
+        (Google Authenticator, Authy, 1Password) или введите ключ вручную.
+      </p>
+      <div class="qr-box">
+        <div style="text-align:center">
+          <div style="font-size:48px">🔐</div>
+          <div style="font-size:12px;color:#888;margin-top:6px">QR-код (демо)</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#777;text-align:center">Ключ для ручного ввода:</div>
+      <div class="secret-box" id="secretBox">${secret}</div>
+      <label>Введите 6-значный код из приложения</label>
+      <div class="code-inputs" id="setupCodeInputs"></div>
+      <div class="auth-error" id="authError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="skipSetup2FA()">Пропустить</button>
+        <button class="btn-save" onclick="confirmSetup2FA()">Включить 2FA</button>
+      </div>
+    `;
+  }
+
+  async function confirmSetup2FA() {
+    const code = getCodeFromInputs('setupCodeInputs');
+    const err = document.getElementById('authError');
+    err.textContent = '';
+
+    if (code.length !== CODE_LENGTH) { err.textContent = 'Введите 6 цифр'; return; }
+
+    const ok = await verifyTotp(authState.setupSecret, code);
+    if (!ok) { err.textContent = 'Неверный код. Проверьте часы и попробуйте снова.'; return; }
+
+    const users = loadUsers();
+    const u = users.find(x => x.id === authState.pendingUserId);
+    if (!u) { err.textContent = 'Пользователь не найден'; return; }
+    u.twoFA = true;
+    u.totpSecret = authState.setupSecret;
+    saveUsers(users);
+
+    finishLogin(u);
+    showToast('Двухфакторная защита включена ✅');
+  }
+
+  function skipSetup2FA() {
+    const user = loadUsers().find(x => x.id === authState.pendingUserId);
+    if (!user) { closeAuth(); return; }
+    finishLogin(user);
+    showToast('2FA не включена. Можно включить позже в профиле.');
+  }
+
+  // ----- ВВОД КОДА ПРИ ВХОДЕ -----
+  function authTOTPHTML() {
+    return `
+      <h2>Двухфакторная проверка</h2>
+      <p style="font-size:14px;color:#555;margin-bottom:8px">
+        Введите 6-значный код из приложения-аутентификатора.
+      </p>
+      <div class="code-inputs" id="loginCodeInputs"></div>
+      <div class="auth-error" id="authError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="cancelTotp()">Отмена</button>
+        <button class="btn-save" onclick="confirmTotp()">Подтвердить</button>
+      </div>
+    `;
+  }
+
+  async function confirmTotp() {
+    const code = getCodeFromInputs('loginCodeInputs');
+    const err = document.getElementById('authError');
+    err.textContent = '';
+
+    if (code.length !== CODE_LENGTH) { err.textContent = 'Введите 6 цифр'; return; }
+
+    const user = loadUsers().find(x => x.id === authState.pendingUserId);
+    if (!user) { err.textContent = 'Пользователь не найден'; return; }
+
+    const ok = await verifyTotp(user.totpSecret, code);
+    if (!ok) { err.textContent = 'Неверный или просроченный код'; return; }
+
+    finishLogin(user);
+  }
+
+  function cancelTotp() {
+    authState.pendingUserId = null;
+    switchAuthMode('login');
+  }
+
+  // ----- ПОЛЯ ВВОДА КОДА -----
+  function renderCodeInputs(containerId) {
+    const box = document.getElementById(containerId);
+    if (!box) return;
+    box.innerHTML = Array.from({ length: CODE_LENGTH }, (_, i) =>
+      `<input type="text" inputmode="numeric" maxlength="1" data-idx="${i}" aria-label="Цифра ${i+1}">`
+    ).join('');
+    const inputs = [...box.querySelectorAll('input')];
+    inputs.forEach((inp, i) => {
+      inp.addEventListener('input', e => {
+        const v = e.target.value.replace(/\D/g, '');
+        e.target.value = v.slice(-1);
+        if (v && i < inputs.length - 1) inputs[i + 1].focus();
+      });
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !e.target.value && i > 0) inputs[i - 1].focus();
+        if (e.key === 'ArrowLeft' && i > 0) inputs[i - 1].focus();
+        if (e.key === 'ArrowRight' && i < inputs.length - 1) inputs[i + 1].focus();
+      });
+      inp.addEventListener('paste', e => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+        if (!text) return;
+        for (let j = 0; j < inputs.length; j++) {
+          inputs[j].value = text[j] || '';
+        }
+        const last = Math.min(text.length, inputs.length) - 1;
+        if (last >= 0) inputs[last].focus();
+      });
+    });
+    if (inputs[0]) inputs[0].focus();
+  }
+
+  function getCodeFromInputs(containerId) {
+    const box = document.getElementById(containerId);
+    if (!box) return '';
+    return [...box.querySelectorAll('input')].map(i => i.value || '').join('');
+  }
+
+  // После отрисовки — инициализируем поля кодов
+  const origRenderAuth = renderAuthModal;
+  renderAuthModal = function () {
+    origRenderAuth();
+    if (authState.mode === 'setup2fa') renderCodeInputs('setupCodeInputs');
+    if (authState.mode === 'totp') renderCodeInputs('loginCodeInputs');
+  };
+
+  // ================================================================
+  //  КАТЕГОРИИ / СОРТИРОВКА / РЕНДЕР
+  // ================================================================
+  function renderCategories() {
+    document.getElementById('categories').innerHTML = categories.map(c =>
+      `<button class="cat-btn ${c === activeCat ? 'active' : ''}" onclick="setCat('${c}')">${c}</button>`
+    ).join('');
+  }
+  function setCat(c) { activeCat = c; renderCategories(); render(); }
+
+  function setSort(v) { currentSort = v; saveSort(v); render(); }
+
+  function sortAds(list) {
+    const arr = [...list];
+    switch (currentSort) {
+      case 'old': return arr.sort((a, b) => a.id - b.id);
+      case 'priceAsc': return arr.sort((a, b) => a.price - b.price);
+      case 'priceDesc': return arr.sort((a, b) => b.price - a.price);
+      default: return arr.sort((a, b) => b.id - a.id);
+    }
+  }
+
+  function render() {
+    const grid = document.getElementById('grid');
+    const q = searchQuery.toLowerCase().trim();
+    const me = currentUser();
+
+    const filtered = ads.filter(a => {
+      const okCat = activeCat === 'Все' || a.cat === activeCat;
+      const okSearch = !q
+        || a.title.toLowerCase().includes(q)
+        || a.desc.toLowerCase().includes(q)
+        || a.city.toLowerCase().includes(q);
+      return okCat && okSearch;
+    });
+
+    const sorted = sortAds(filtered);
+    document.getElementById('resultsInfo').textContent =
+      sorted.length ? `Найдено объявлений: ${sorted.length}` : '';
+    document.getElementById('sortSelect').value = currentSort;
+
+    if (!sorted.length) {
+      grid.innerHTML = `<div class="empty">😕 Ничего не найдено.</div>`;
+      return;
+    }
+
+    grid.innerHTML = sorted.map(a => {
+      const media = a.photo
+        ? `<img src="${a.photo}" alt="${escapeHtml(a.title)}" loading="lazy">`
+        : (emojiByCat[a.cat] || '📦');
+      const mine = me && a.ownerId === me.id;
+      const editBtn = mine
+        ? `<button class="card-edit" title="Редактировать" onclick="event.stopPropagation(); openModal(${a.id})">✎</button>`
+        : '';
+      const delBtn = mine
+        ? `<button class="card-delete" title="Удалить" onclick="event.stopPropagation(); removeAd(${a.id})">✕</button>`
+        : '';
+      return `
+        <div class="card" onclick="showAd(${a.id})">
+          ${editBtn}${delBtn}
+          <div class="card-img">${media}</div>
+          <div class="card-body">
+            <div class="card-price">${formatPrice(a.price)}</div>
+            <div class="card-title">${escapeHtml(a.title)}</div>
+            <div class="card-location">${escapeHtml(a.city)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function formatPrice(p) { return p.toLocaleString('ru-RU') + ' ₽'; }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
+  function applySearch() { searchQuery = document.getElementById('searchInput').value; render(); }
+  document.getElementById('searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') applySearch();
+  });
+
+  // ================================================================
+  //  ПРОСМОТР / РЕДАКТИРОВАНИЕ / УДАЛЕНИЕ
+  // ================================================================
+  function showAd(id) {
+    const a = ads.find(x => x.id === id);
+    if (!a) return;
+    const me = currentUser();
+    const mine = me && a.ownerId === me.id;
+
+    let photoHtml = a.photo
+      ? `<div style="margin-bottom:12px;border-radius:10px;overflow:hidden">
+           <img src="${a.photo}" style="width:100%;display:block" alt="">
+         </div>` : '';
+
+    const actions = mine
+      ? `<button class="btn-edit" onclick="this.closest('.modal-overlay').remove(); openModal(${a.id})">Редактировать</button>
+         <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>`
+      : `<button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>`;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay open';
+    overlay.style.zIndex = 250;
+    overlay.innerHTML = `
+      <div class="modal">
+        ${photoHtml}
+        <h2 style="margin-top:0">${escapeHtml(a.title)}</h2>
+        <div style="font-size:22px;font-weight:700;margin-bottom:10px">${formatPrice(a.price)}</div>
+        <div style="font-size:14px;color:#666;margin-bottom:6px">📂 ${a.cat}</div>
+        <div style="font-size:14px;color:#666;margin-bottom:14px">📍 ${escapeHtml(a.city)}</div>
+        <div style="font-size:14px;line-height:1.5;color:#333">${escapeHtml(a.desc || 'Описание не указано.')}</div>
+        <div class="modal-actions">${actions}</div>
+      </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    document.body.appendChild(overlay);
+  }
+
+  function removeAd(id) {
+    const me = currentUser();
+    if (!me) { openAuth('login'); return; }
+    const a = ads.find(x => x.id === id);
+    if (!a || a.ownerId !== me.id) { showToast('Это не ваше объявление'); return; }
+    if (!confirm(`Удалить «${a.title}»?`)) return;
+    ads = ads.filter(x => x.id !== id);
+    saveAds(ads);
+    render();
+    showToast('Объявление удалено 🗑️');
+  }
+
+  // ================================================================
+  //  МОДАЛЬНОЕ ОКНО ОБЪЯВЛЕНИЯ
+  // ================================================================
+  function openModal(id = null) {
+    const me = currentUser();
+    if (!me) { openAuth('login'); return; }
+
+    editingId = id;
+    const isEdit = id !== null;
+    const a = isEdit ? ads.find(x => x.id === id) : null;
+    if (isEdit && (!a || a.ownerId !== me.id)) { showToast('Нет доступа'); return; }
+
+    document.getElementById('modalTitle').textContent = isEdit ? 'Редактировать объявление' : 'Новое объявление';
+    document.getElementById('btnSave').textContent = isEdit ? 'Сохранить' : 'Опубликовать';
+
+    const sel = document.getElementById('inCat');
+    sel.innerHTML = categories.filter(c => c !== 'Все')
+      .map(c => `<option value="${c}">${c}</option>`).join('');
+
+    if (isEdit && a) {
+      document.getElementById('inTitle').value = a.title;
+      document.getElementById('inPrice').value = a.price;
+      sel.value = a.cat;
+      document.getElementById('inCity').value = a.city;
+      document.getElementById('inDesc').value = a.desc || '';
+      clearPhoto();
+      if (a.photo) {
+        currentPhotoData = a.photo;
+        previewImg.src = a.photo;
+        preview.classList.add('visible');
+        dropZone.style.display = 'none';
+      }
+    } else {
+      ['inTitle','inPrice','inCity','inDesc'].forEach(f => document.getElementById(f).value = '');
+      clearPhoto();
+    }
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    clearPhoto();
+    editingId = null;
+  }
+
+  // ================================================================
+  //  ФОТО
+  // ================================================================
+  const fileInput = document.getElementById('inPhoto');
+  const dropZone = document.getElementById('photoDrop');
+  const preview = document.getElementById('photoPreview');
+  const previewImg = document.getElementById('previewImg');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  ['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => {
+    e.preventDefault(); dropZone.classList.add('dragover');
+  }));
+  ['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+  }));
+  dropZone.addEventListener('drop', e => {
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  fileInput.addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) handleFile(f);
+  });
+
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) { showToast('Это не изображение'); return; }
+    if (file.size > MAX_FILE_MB * 1024 * 1024) { showToast(`Файл больше ${MAX_FILE_MB} МБ`); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const dataUrl = compressImage(img);
+        if (!dataUrl) { showToast('Не удалось обработать фото'); return; }
+        currentPhotoData = dataUrl;
+        previewImg.src = dataUrl;
+        preview.classList.add('visible');
+        dropZone.style.display = 'none';
+      };
+      img.onerror = () => showToast('Битый файл');
+      img.src = ev.target.result;
+    };
+    reader.onerror = () => showToast('Не удалось прочитать файл');
+    reader.readAsDataURL(file);
+  }
+
+  function compressImage(img) {
+    let { width, height } = img;
+    if (width > height && width > MAX_IMG_SIZE) {
+      height = Math.round(height * MAX_IMG_SIZE / width); width = MAX_IMG_SIZE;
+    } else if (height >= width && height > MAX_IMG_SIZE) {
+      width = Math.round(width * MAX_IMG_SIZE / height); height = MAX_IMG_SIZE;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+    try { return canvas.toDataURL('image/jpeg', JPEG_QUALITY); }
+    catch { return null; }
+  }
+
+  function clearPhoto() {
+    currentPhotoData = null;
+    fileInput.value = '';
+    previewImg.removeAttribute('src');
+    preview.classList.remove('visible');
+    dropZone.style.display = '';
+  }
+
+  // ================================================================
+  //  СОХРАНЕНИЕ ОБЪЯВЛЕНИЯ
+  // ================================================================
+  function submitAd() {
+    const me = currentUser();
+    if (!me) { openAuth('login'); return; }
+
+    const title = document.getElementById('inTitle').value.trim();
+    const price = parseInt(document.getElementById('inPrice').value, 10);
+    const cat = document.getElementById('inCat').value;
+    const city = document.getElementById('inCity').value.trim() || 'Не указан';
+    const desc = document.getElementById('inDesc').value.trim();
+
+    if (!title) { showToast('Введите название'); return; }
+    if (!price || price <= 0) { showToast('Введите корректную цену'); return; }
+
+    const prev = ads;
+    if (editingId === null) {
+      ads = [{ id: nextId++, title, price, cat, city, desc, photo: currentPhotoData, ownerId: me.id }, ...ads];
+    } else {
+      const old = ads.find(a => a.id === editingId);
+      if (!old || old.ownerId !== me.id) { showToast('Нет доступа'); return; }
+      ads = ads.map(a => a.id === editingId
+        ? { ...a, title, price, cat, city, desc, photo: currentPhotoData }
+        : a);
+    }
+    if (!saveAds(ads)) { ads = prev; if (editingId === null) nextId--; return; }
+
+    const wasEdit = editingId !== null;
+    closeModal(); render();
+    showToast(wasEdit ? 'Обновлено ✏️' : 'Опубликовано ✅');
+  }
+
+  // ================================================================
+  //  ЗАКРЫТИЕ И ESC
+  // ================================================================
+  document.getElementById('authOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeAuth();
+  });
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('authOverlay').classList.contains('open')) closeAuth();
+    if (document.getElementById('modalOverlay').classList.contains('open')) closeModal();
+    document.querySelectorAll('.modal-overlay.open[style*="z-index: 250"]').forEach(el => el.remove());
+  });
+
+  // ================================================================
+  //  TOAST
+  // ================================================================
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // ================================================================
+  //  СТАРТ
+  // ================================================================
+  renderCategories();
+  renderUserArea();
+  render();
+</script>
+
+</body>
+</html>
