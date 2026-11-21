@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Доска объявлений — Продай и купи</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  body {
+    background: #f5f6f8;
+    color: #222;
+  }
+
+  /* Шапка */
+  header {
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0a7cff;
+    white-space: nowrap;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+  }
+
+  .search-box input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    font-size: 15px;
+    outline: none;
+  }
+
+  .search-box input:focus {
+    border-color: #0a7cff;
+  }
+
+  .search-box button {
+    padding: 10px 20px;
+    background: #0a7cff;
+    color: #fff;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    font-size: 15px;
+  }
+
+  .search-box button:hover {
+    background: #005fcc;
+  }
+
+  .btn-post {
+    padding: 10px 20px;
+    background: #00b341;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+
+  .btn-post:hover {
+    background: #009036;
+  }
+
+  /* Категории */
+  .categories {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 0 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .cat-btn {
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+  }
+
+  .cat-btn:hover {
+    border-color: #0a7cff;
+    color: #0a7cff;
+  }
+
+  .cat-btn.active {
+    background: #0a7cff;
+    color: #fff;
+    border-color: #0a7cff;
+  }
+
+  /* Сетка объявлений */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+  }
+
+  /* Тулбар с сортировкой */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .results-info {
+    color: #777;
+    font-size: 14px;
+  }
+
+  .sort-select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .sort-select:focus,
+  .sort-select:hover {
+    border-color: #0a7cff;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 16px;
+  }
+
+  /* Карточка */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    transition: 0.2s;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+  }
+
+  .card-img {
+    height: 160px;
+    background: #e9edf2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: #b9c2cc;
+    overflow: hidden;
+  }
+
+  .card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-body {
+    padding: 12px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .card-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .card-title {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.35;
+    flex: 1;
+  }
+
+  .card-location {
+    font-size: 12px;
+    color: #999;
+  }
+
+  /* Кнопки действий на карточке */
+  .card-delete,
+  .card-edit {
+    position: absolute;
+    top: 8px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    z-index: 2;
+  }
+
+  .card-edit {
+    right: 44px;
+    color: #0a7cff;
+  }
+
+  .card-delete {
+    right: 8px;
+    color: #d33;
+  }
+
+  .card:hover .card-delete,
+  .card:hover .card-edit {
+    opacity: 1;
+  }
+
+  .card-edit:hover {
+    background: #0a7cff;
+    color: #fff;
+  }
+
+  .card-delete:hover {
+    background: #d33;
+    color: #fff;
+  }
+
+  /* Модальное окно */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open {
+    display: flex;
+  }
+
+  .modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%;
+    max-width: 440px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal h2 {
+    margin-bottom: 16px;
+    font-size: 20px;
+  }
+
+  .modal label {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 4px;
+    margin-top: 12px;
+  }
+
+  .modal input[type="text"],
+  .modal input[type="number"],
+  .modal select,
+  .modal textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .modal input:focus,
+  .modal select:focus,
+  .modal textarea:focus {
+    border-color: #0a7cff;
+  }
+
+  .modal textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  /* Загрузка фото */
+  .photo-upload {
+    margin-top: 6px;
+  }
+
+  .photo-drop {
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #888;
+    font-size: 14px;
+    background: #fafbfc;
+  }
+
+  .photo-drop:hover,
+  .photo-drop.dragover {
+    border-color: #0a7cff;
+    background: #f0f7ff;
+    color: #0a7cff;
+  }
+
+  .photo-drop input[type="file"] {
+    display: none;
+  }
+
+  .photo-preview {
+    display: none;
+    margin-top: 10px;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #eee;
+  }
+
+  .photo-preview.visible {
+    display: block;
+  }
+
+  .photo-preview img {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .photo-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .photo-remove:hover {
+    background: #d33;
+  }
+
+  .photo-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 6px;
+  }
+
+  .modal-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .modal-actions button {
+    flex: 1;
+    padding: 11px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .btn-save {
+    background: #0a7cff;
+    color: #fff;
+  }
+
+  .btn-save:hover {
+    background: #005fcc;
+  }
+
+  .btn-save:disabled {
+    background: #9cc8ff;
+    cursor: wait;
+  }
+
+  .btn-cancel {
+    background: #eee;
+    color: #333;
+  }
+
+  .btn-cancel:hover {
+    background: #ddd;
+  }
+
+  .btn-edit {
+    background: #0a7cff;
+    color: #fff;
+  }
+
+  .btn-edit:hover {
+    background: #005fcc;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+    font-size: 16px;
+  }
+
+  /* Уведомление */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #222;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    opacity: 0;
+    transition: 0.3s;
+    z-index: 300;
+    pointer-events: none;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  @media (max-width: 600px) {
+    .header-inner {
+      gap: 10px;
+    }
+    .btn-post {
+      width: 100%;
+    }
+    .search-box {
+      order: 3;
+      flex-basis: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">📦 Барахло</div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Что ищете? Например, iPhone или диван">
+      <button onclick="applySearch()">Найти</button>
+    </div>
+    <button class="btn-post" onclick="openModal()">+ Разместить</button>
+  </div>
+</header>
+
+<div class="categories" id="categories"></div>
+
+<div class="container">
+  <div class="toolbar">
+    <div class="results-info" id="resultsInfo"></div>
+    <select class="sort-select" id="sortSelect" onchange="setSort(this.value)">
+      <option value="new">Сначала новые</option>
+      <option value="old">Сначала старые</option>
+      <option value="priceAsc">Цена: по возрастанию</option>
+      <option value="priceDesc">Цена: по убыванию</option>
+    </select>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- Модальное окно добавления / редактирования -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Новое объявление</h2>
+
+    <label>Фото</label>
+    <div class="photo-upload">
+      <div class="photo-drop" id="photoDrop">
+        📷 Нажмите или перетащите фото сюда
+        <input type="file" id="inPhoto" accept="image/*">
+      </div>
+      <div class="photo-preview" id="photoPreview">
+        <img id="previewImg" alt="Превью">
+        <button class="photo-remove" type="button" onclick="clearPhoto()" title="Удалить фото">✕</button>
+      </div>
+      <div class="photo-hint">JPG, PNG, WebP. Сжимается автоматически до ~800px.</div>
+    </div>
+
+    <label>Название</label>
+    <input type="text" id="inTitle" placeholder="Например, iPhone 13 128GB">
+    <label>Цена, ₽</label>
+    <input type="number" id="inPrice" placeholder="45000" min="0">
+    <label>Категория</label>
+    <select id="inCat"></select>
+    <label>Город</label>
+    <input type="text" id="inCity" placeholder="Москва">
+    <label>Описание</label>
+    <textarea id="inDesc" placeholder="Состояние, детали, причина продажи..."></textarea>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+      <button class="btn-save" id="btnSave" onclick="submitAd()">Опубликовать</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---------- Константы ----------
+  const STORAGE_KEY = 'barahlo_ads_v2';
+  const SEED_KEY = 'barahlo_seeded_v2';
+  const SORT_KEY = 'barahlo_sort_v1';
+
+  const MAX_IMG_SIZE = 800;
+  const JPEG_QUALITY = 0.75;
+  const MAX_FILE_MB = 10;
+
+  const categories = ['Все', 'Электроника', 'Транспорт', 'Недвижимость', 'Дом и сад', 'Одежда', 'Хобби'];
+
+  const emojiByCat = {
+    'Электроника': '📱',
+    'Транспорт': '🚗',
+    'Недвижимость': '🏠',
+    'Дом и сад': '🪴',
+    'Одежда': '👕',
+    'Хобби': '🎸'
+  };
+
+  // ---------- Стартовые объявления ----------
+  const seedAds = [
+    { id: 1, title: 'iPhone 13 128GB, идеальное состояние', price: 45000, cat: 'Электроника', city: 'Москва', desc: 'Куплен год назад, без сколов, батарея 92%.', photo: null },
+    { id: 2, title: 'Диван-кровать угловой, серый', price: 18000, cat: 'Дом и сад', city: 'Санкт-Петербург', desc: 'Раскладывается, есть ящик для белья.', photo: null },
+    { id: 3, title: 'Велосипед горный Trek Marlin 5', price: 32000, cat: 'Транспорт', city: 'Казань', desc: 'Размер M, пробег небольшой, ТО пройдено.', photo: null },
+    { id: 4, title: 'Ноутбук ASUS VivoBook 15', price: 38000, cat: 'Электроника', city: 'Новосибирск', desc: 'Ryzen 5, 16GB RAM, 512GB SSD.', photo: null },
+    { id: 5, title: 'Куртка зимняя мужская, р. L', price: 4500, cat: 'Одежда', city: 'Екатеринбург', desc: 'Тёплая, носилась один сезон.', photo: null },
+    { id: 6, title: 'Синтезатор Yamaha PSR-E373', price: 21000, cat: 'Хобби', city: 'Москва', desc: '61 клавиша, в комплекте стойка и педаль.', photo: null },
+    { id: 7, title: '1-комнатная квартира, 38 м²', price: 6500000, cat: 'Недвижимость', city: 'Москва', desc: '5 минут до метро, свежий ремонт.', photo: null },
+    { id: 8, title: 'PlayStation 5 + 2 геймпада', price: 52000, cat: 'Электроника', city: 'Санкт-Петербург', desc: 'Дисковая версия, 3 игры в подарок.', photo: null }
+  ];
+
+  // ---------- Загрузка / сохранение ----------
+  function loadAds() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.warn('Ошибка чтения localStorage:', e);
+    }
+    if (!localStorage.getItem(SEED_KEY)) {
+      localStorage.setItem(SEED_KEY, '1');
+      saveAds(seedAds);
+      return [...seedAds];
+    }
+    return [];
+  }
+
+  function saveAds(list) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      console.warn('Ошибка сохранения:', e);
+      showToast('⚠️ Не хватает места в хранилище. Удалите старые фото.');
+      return false;
+    }
+  }
+
+  function loadSort() {
+    const s = localStorage.getItem(SORT_KEY);
+    return ['new', 'old', 'priceAsc', 'priceDesc'].includes(s) ? s : 'new';
+  }
+
+  function saveSort(v) {
+    try { localStorage.setItem(SORT_KEY, v); } catch (e) {}
+  }
+
+  // ---------- Состояние ----------
+  let ads = loadAds();
+  let activeCat = 'Все';
+  let searchQuery = '';
+  let currentSort = loadSort();
+  let nextId = ads.reduce((max, a) => Math.max(max, a.id), 0) + 1;
+  let currentPhotoData = null;
+  let editingId = null;
+
+  // ---------- Рендер категорий ----------
+  function renderCategories() {
+    const box = document.getElementById('categories');
+    box.innerHTML = categories.map(c =>
+      `<button class="cat-btn ${c === activeCat ? 'active' : ''}" onclick="setCat('${c}')">${c}</button>`
+    ).join('');
+  }
+
+  function setCat(c) {
+    activeCat = c;
+    renderCategories();
+    render();
+  }
+
+  // ---------- Сортировка ----------
+  function setSort(v) {
+    currentSort = v;
+    saveSort(v);
+    render();
+  }
+
+  function sortAds(list) {
+    const arr = [...list];
+    switch (currentSort) {
+      case 'old':
+        // Сначала старые: меньший id — раньше
+        return arr.sort((a, b) => a.id - b.id);
+      case 'priceAsc':
+        return arr.sort((a, b) => a.price - b.price);
+      case 'priceDesc':
+        return arr.sort((a, b) => b.price - a.price);
+      case 'new':
+      default:
+        // Сначала новые: больший id — раньше
+        return arr.sort((a, b) => b.id - a.id);
+    }
+  }
+
+  // ---------- Фильтрация и рендер карточек ----------
+  function render() {
+    const grid = document.getElementById('grid');
+    const q = searchQuery.toLowerCase().trim();
+
+    const filtered = ads.filter(a => {
+      const okCat = activeCat === 'Все' || a.cat === activeCat;
+      const okSearch = !q
+        || a.title.toLowerCase().includes(q)
+        || a.desc.toLowerCase().includes(q)
+        || a.city.toLowerCase().includes(q);
+      return okCat && okSearch;
+    });
+
+    const sorted = sortAds(filtered);
+
+    document.getElementById('resultsInfo').textContent =
+      sorted.length ? `Найдено объявлений: ${sorted.length}` : '';
+
+    // Синхронизируем select с текущим состоянием
+    const sel = document.getElementById('sortSelect');
+    if (sel.value !== currentSort) sel.value = currentSort;
+
+    if (!sorted.length) {
+      grid.innerHTML = `<div class="empty">😕 Ничего не найдено.<br>Попробуйте изменить запрос или категорию.</div>`;
+      return;
+    }
+
+    grid.innerHTML = sorted.map(a => {
+      const media = a.photo
+        ? `<img src="${a.photo}" alt="${escapeHtml(a.title)}" loading="lazy">`
+        : (emojiByCat[a.cat] || '📦');
+      return `
+        <div class="card" onclick="showAd(${a.id})">
+          <button class="card-edit" title="Редактировать" onclick="event.stopPropagation(); openModal(${a.id})">✎</button>
+          <button class="card-delete" title="Удалить" onclick="event.stopPropagation(); removeAd(${a.id})">✕</button>
+          <div class="card-img">${media}</div>
+          <div class="card-body">
+            <div class="card-price">${formatPrice(a.price)}</div>
+            <div class="card-title">${escapeHtml(a.title)}</div>
+            <div class="card-location">${escapeHtml(a.city)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function formatPrice(p) {
+    return p.toLocaleString('ru-RU') + ' ₽';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
+  // ---------- Поиск ----------
+  function applySearch() {
+    searchQuery = document.getElementById('searchInput').value;
+    render();
+  }
+
+  document.getElementById('searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') applySearch();
+  });
+
+  // ---------- Просмотр объявления ----------
+  function showAd(id) {
+    const a = ads.find(x => x.id === id);
+    if (!a) return;
+
+    let photoHtml = '';
+    if (a.photo) {
+      photoHtml = `<div style="margin-bottom:12px;border-radius:10px;overflow:hidden">
+        <img src="${a.photo}" style="width:100%;display:block" alt="">
+      </div>`;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay open';
+    overlay.style.zIndex = 250;
+    overlay.innerHTML = `
+      <div class="modal">
+        ${photoHtml}
+        <h2 style="margin-top:0">${escapeHtml(a.title)}</h2>
+        <div style="font-size:22px;font-weight:700;margin-bottom:10px">${formatPrice(a.price)}</div>
+        <div style="font-size:14px;color:#666;margin-bottom:6px">📂 ${a.cat}</div>
+        <div style="font-size:14px;color:#666;margin-bottom:14px">📍 ${escapeHtml(a.city)}</div>
+        <div style="font-size:14px;line-height:1.5;color:#333">${escapeHtml(a.desc || 'Описание не указано.')}</div>
+        <div class="modal-actions">
+          <button class="btn-edit" onclick="this.closest('.modal-overlay').remove(); openModal(${a.id})">Редактировать</button>
+          <button class="btn-cancel" onclick="this.closest('.modal-overlay').remove()">Закрыть</button>
+        </div>
+      </div>
+    `;
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
+  }
+
+  // ---------- Удаление объявления ----------
+  function removeAd(id) {
+    const a = ads.find(x => x.id === id);
+    if (!a) return;
+    if (!confirm(`Удалить объявление «${a.title}»?`)) return;
+
+    ads = ads.filter(x => x.id !== id);
+    saveAds(ads);
+    render();
+    showToast('Объявление удалено 🗑️');
+  }
+
+  // ---------- Модальное окно ----------
+  function openModal(id = null) {
+    editingId = id;
+    const isEdit = id !== null;
+    const a = isEdit ? ads.find(x => x.id === id) : null;
+
+    document.getElementById('modalTitle').textContent = isEdit ? 'Редактировать объявление' : 'Новое объявление';
+    document.getElementById('btnSave').textContent = isEdit ? 'Сохранить' : 'Опубликовать';
+
+    const sel = document.getElementById('inCat');
+    sel.innerHTML = categories.filter(c => c !== 'Все')
+      .map(c => `<option value="${c}">${c}</option>`).join('');
+
+    if (isEdit && a) {
+      document.getElementById('inTitle').value = a.title;
+      document.getElementById('inPrice').value = a.price;
+      sel.value = a.cat;
+      document.getElementById('inCity').value = a.city;
+      document.getElementById('inDesc').value = a.desc || '';
+
+      clearPhoto();
+      if (a.photo) {
+        currentPhotoData = a.photo;
+        previewImg.src = a.photo;
+        preview.classList.add('visible');
+        dropZone.style.display = 'none';
+      }
+    } else {
+      ['inTitle','inPrice','inCity','inDesc'].forEach(f => document.getElementById(f).value = '');
+      clearPhoto();
+    }
+
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    clearPhoto();
+    editingId = null;
+  }
+
+  // ---------- Обработка фото ----------
+  const fileInput = document.getElementById('inPhoto');
+  const dropZone = document.getElementById('photoDrop');
+  const preview = document.getElementById('photoPreview');
+  const previewImg = document.getElementById('previewImg');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+
+  ['dragenter', 'dragover'].forEach(ev =>
+    dropZone.addEventListener(ev, e => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    })
+  );
+  ['dragleave', 'drop'].forEach(ev =>
+    dropZone.addEventListener(ev, e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+    })
+  );
+  dropZone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (file) handleFile(file);
+  });
+
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) {
+      showToast('Это не изображение');
+      return;
+    }
+    if (file.size > MAX_FILE_MB * 1024 * 1024) {
+      showToast(`Файл больше ${MAX_FILE_MB} МБ`);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const dataUrl = compressImage(img);
+        if (!dataUrl) {
+          showToast('Не удалось обработать фото');
+          return;
+        }
+        currentPhotoData = dataUrl;
+        previewImg.src = dataUrl;
+        preview.classList.add('visible');
+        dropZone.style.display = 'none';
+      };
+      img.onerror = () => showToast('Битый файл изображения');
+      img.src = ev.target.result;
+    };
+    reader.onerror = () => showToast('Не удалось прочитать файл');
+    reader.readAsDataURL(file);
+  }
+
+  function compressImage(img) {
+    let { width, height } = img;
+    if (width > height && width > MAX_IMG_SIZE) {
+      height = Math.round(height * MAX_IMG_SIZE / width);
+      width = MAX_IMG_SIZE;
+    } else if (height >= width && height > MAX_IMG_SIZE) {
+      width = Math.round(width * MAX_IMG_SIZE / height);
+      height = MAX_IMG_SIZE;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+
+    try {
+      return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+    } catch (e) {
+      console.warn('toDataURL error:', e);
+      return null;
+    }
+  }
+
+  function clearPhoto() {
+    currentPhotoData = null;
+    fileInput.value = '';
+    previewImg.removeAttribute('src');
+    preview.classList.remove('visible');
+    dropZone.style.display = '';
+  }
+
+  // ---------- Сохранение (создание или обновление) ----------
+  function submitAd() {
+    const title = document.getElementById('inTitle').value.trim();
+    const price = parseInt(document.getElementById('inPrice').value, 10);
+    const cat = document.getElementById('inCat').value;
+    const city = document.getElementById('inCity').value.trim() || 'Не указан';
+    const desc = document.getElementById('inDesc').value.trim();
+
+    if (!title) { showToast('Введите название'); return; }
+    if (!price || price <= 0) { showToast('Введите корректную цену'); return; }
+
+    const prevAds = ads;
+
+    if (editingId === null) {
+      ads = [{ id: nextId++, title, price, cat, city, desc, photo: currentPhotoData }, ...ads];
+    } else {
+      ads = ads.map(a => a.id === editingId
+        ? { ...a, title, price, cat, city, desc, photo: currentPhotoData }
+        : a
+      );
+    }
+
+    if (!saveAds(ads)) {
+      ads = prevAds;
+      if (editingId === null) nextId--;
+      return;
+    }
+
+    const wasEdit = editingId !== null;
+    closeModal();
+    render();
+    showToast(wasEdit ? 'Объявление обновлено ✏️' : 'Объявление опубликовано ✅');
+  }
+
+  // Закрытие по клику на фон
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+
+  // Закрытие по Esc
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('modalOverlay').classList.contains('open')) closeModal();
+      document.querySelectorAll('.modal-overlay.open[style*="z-index: 250"]').forEach(el => el.remove());
+    }
+  });
+
+  // ---------- Уведомление ----------
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // ---------- Старт ----------
+  renderCategories();
+  render();
+</script>
+
+</body>
+</html>
